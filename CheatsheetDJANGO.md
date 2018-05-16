@@ -1,4 +1,4 @@
-#H1 Django Cheat Sheet 
+# H1 Django Cheat Sheet #
 
 In `settings.py` (this file lives inside the `main` directory. The main directory is alongside `apps and manage.py`) we are going to have to add our application to the project. That means adding `apps.first_app` to our `INSTALLED_APPS` list:
 
