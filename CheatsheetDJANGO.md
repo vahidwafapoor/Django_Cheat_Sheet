@@ -62,10 +62,10 @@ Let's take a closer look at `urls.py`:
     This explicitly imports views.py in the current folder.
 
 `url(r'^$', views.index)`
-Uses the url method in a way that’s very similar to the @app.route method in Flask. The r after the ( tells Python to interpret the following as a raw string, so it won't escape any special characters -- useful when dealing with regex strings! We'll talk about regex in a bit more depth in the next module.
-In this case, our regex will exactly match an empty string. That means if you were to go to localhost:8000/, Django (after removing the '/' automatically) will check if your url matches any of the patterns in the urlpatterns list.
-In this case, it does! An empty string is what r'^$' looks for. Since the pattern matches, we run the views.index method.
-url() will eventually take another parameter, something like name='index', which we’ll introduce when we talk about named routes.
+Uses the url method in a way that’s very similar to the `@app.route` method in Flask. The `r` after the `(` tells Python to interpret the following as a raw string, so it won't escape any special characters -- useful when dealing with regex strings! We'll talk about regex in a bit more depth in the next module.
+In this case, our regex will exactly match an empty string. That means if you were to go to `localhost:8000/`, Django (after removing the `'/'` automatically) will check if your url matches any of the patterns in the urlpatterns list.
+In this case, it does! An empty string is what `r'^$'` looks for. Since the pattern matches, we run the `views.index` method.
+`url()` will eventually take another parameter, something like `name='index'`, which we’ll introduce when we talk about named routes.
 Note that, unlike a Flask route where there is an HTTP method (e.g. “GET” and/or “POST”), Django doesn’t care. We (the developer) figure that out in the method by accessing request.method in our function.
 
 ### Views
@@ -111,3 +111,46 @@ Use Python's regex documentation as a reference if you need anything more comple
 - `url(r'^articles/2003/$', views.special_case_2003)`
 - `url(r'^articles/(?P[0-9]{4})$', views.year_archive)`
 - `url(r'^articles/(?P[0-9]{4})/(?P[0-9]{2}$', views.month_archive)`
+
+## Templates and Static Files Review
+
+In our views file, Django knows to look in the templates folder first for whatever path we pass to our render method.
+```python
+# views.py
+from django.shortcuts import render, HttpResponse, redirect
+def index(request):
+    context = {
+        "email" : "blog@gmail.com",
+        "name" : "mike"
+    }
+    return render(request, "ourApp/index.html", context)
+```
+So this code actually tells the index method to look in templates/ourApp and then at the `index.html` file.
+
+The behavior for static files is very similar: Django’s template rendering system knows (if it's told) to look in the static and then at the path for the specific file relative to that folder!
+
+What this looks like in HTML is:
+```HTML
+<!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Index</title>
+      {% load static %}
+      <!-- The line above tells Django to be ready to listen for static files -->
+      <link rel="stylesheet" href="{% static 'ourApp/css/main.css' %}">
+      <!-- Put the static files in the static folder inside your app.  
+           Django collects files within all static folders and puts them within a single folder -->    
+    </head>
+    <body>
+        <h1>Hello World!</h1>
+        <p>{{email}} and {{name}}</p>
+    </body>
+  </html>
+```
+In other words, loading static files, whether it's CSS or JavaScript or images, will start the search path inside of ourApp’s static folder, and after that, the rest of that path is up to us! A good habit to get into is separating our JavaScript, CSS, and images into three folders (and specifying which app we are retrieving these files from, as outlined in the structure at the top of this tab!
+
+Note the Django templating call inside the link tag too!
+
+References
+[Django Documentation](https://docs.djangoproject.com/en/1.11/howto/static-files/)
