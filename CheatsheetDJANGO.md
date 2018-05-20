@@ -154,3 +154,86 @@ Note the Django templating call inside the link tag too!
 
 References
 [Django Documentation](https://docs.djangoproject.com/en/1.11/howto/static-files/)
+
+## Form Data
+
+As you’ve already seen, getting information from a user via forms is an extremely important part of web development. When we were using Flask, we used the form property of the request object to access input values.
+
+Django behaves very similarly, except the property is `request.POST` if the method that hits the route is a `POST` and `request.GET` if the method that hits the route is a `GET`.
+
+We are adding a form to `.../blogs/templates/blogs/index.html`
+```HTML
+<form action="/blogs/create" method="post">
+  {% csrf_token %}
+  <label for="name">Blog Name:</label>
+  <input type="text" id="name" name="name" placeholder="blog name">
+  <label for="desc">Description:</label>        
+  <textarea id="desc" name="desc" placeholder="description"></textarea>
+  <button type="submit">Submit</button>
+</form>
+```
+Don't forget to add the new url to `.../blogs/urls.py`:
+```python
+url(r'^create$', views.create)
+```
+Which means we'll need the create() function in `.../blogs/views.py`
+
+```python
+from django.shortcuts import render, HttpResponse, redirect
+def create(request):
+    if request.method == "POST":
+        print("*"*50)
+        print(request.POST)
+        print(request.POST['name'])
+        print(request.POST['desc'])
+        request.session['name'] = "test"  # more on session below
+        print("*"*50)
+        return redirect("/")
+    else:
+        return redirect("/")
+```
+
+### Key Terms
+- `request.POST`
+Data from POST request
+- `request.GET`
+Data from GET request
+- `request.method`
+Returns the method/HTTP verb associated with the request
+- `{% csrf_token %}`
+Prevents cross-site request forgery (place it in a form on the HTML/template side of your project)
+
+
+## Session
+
+Now let’s set up to use session!
+
+In our terminal, head to the directory where manage.py resides and run the following commands:
+
+  `# Need to be in same directory as manage.py file`
+  `> python manage.py makemigrations`
+  `> python manage.py migrate`
+Excellent. Not only does that annoying warning you’ve been suffering disappear, but now session is now available to us (as seen in that last line: Applying sessions.0001_initial... OK).
+
+Now we can restart our server and use session:
+
+`request.session` # It's a dictionary, so you can attach key/value pairs
+As request.session is just a dictionary, you can attach any key/value pairs.  For example, in the views.py file, you could do:
+
+
+request.session['name'] = request.POST['name']
+request.session['counter'] = 100
+In the html file, Django lets you directly access request.session.  For example to access request.session['name'], simply do:
+
+{{request.session.name}}
+Useful session methods:
+request.session['key']
+This will retrieve (get) the value stored in key
+request.session['key'] = 'value'
+Set the value that will be stored by key
+del request.session['key']
+Deletes a session key if it exists, throws a keyError if it doesn’t. Use along with try and except since it’s better to ask for forgiveness than permission
+'key' in request.session
+Returns a boolean of whether a key is in session or not
+{{ request.session.name }}
+Use dot notation (.) to access request.session keys from templates since square brackets ([]) aren’t allowed there
