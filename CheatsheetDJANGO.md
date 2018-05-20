@@ -25,7 +25,7 @@ In `settings.py` (this file lives inside the `main` directory. The main director
 ```
 Go to your `main` folder anf run `python manage.py runserver` from the terminal. Then proceed to `localhost:8000`. You should see a simple page. Stop the server with Ctrl-C before moving on. 
 
-#H2 URLS and Views 
+### URLS and Views 
 
 Django's urls are the routing part of Django. To make sure you are sending the right routes to your first app, set up the `main` project urls to make requests to your apps routing file. That file is `urls.py` and will be inside of the directory `apps/first_app`.
 
