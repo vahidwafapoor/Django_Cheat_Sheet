@@ -330,7 +330,8 @@ migrate actually applies the changes made above. This step is where the SQL quer
 
 The migration process is split into two steps so that Django can check and make sure you wrote code it can understand before moving on to the next step.
 
-Note:
+### Note:
+
 1. Never delete migration files, and always makemigrations and migrate anytime you change something in your models.py files – that's what updates the actual database so it reflects what's in your models.
 
 2. For now we are going to be using SQLite - a SQL database that comes packaged with Django and has much of the functionality of MySQL (but not all of it) and is stored as local memory in a file, and as such is very fast. This type of database is best used in development, like we're doing now.
@@ -340,3 +341,45 @@ Note:
 4. Django ORM models and queries will always be the same no matter which database we are using.
 
 Now we've seen how to build a model and migrate in order to translate our code to SQL.
+
+## ForeignKey Relationships 
+
+To show a one-to-many relationship between models, Django uses a special field, 'ForeignKey'. Consider these models: 
+
+```python
+class Author(models.Model):
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+class Book(models.Model):
+    title = models.CharField(max_length=255)
+    author = models.ForeignKey(Author, related_name="books")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+```
+Notice that the `Book` model has this line: `models.ForeignKey(Author, related_name="books")`. This establishes a one-to-many relationship, that one author can have many books, and that information about a book's author can be accessed as `some_book.author`. To create a record that has this foreign key relationship, you'd pass it into the `create` function, like with any other field:
+
+```python
+this_author = Author.objects.get(id=2)
+my_book = Book.objects.create(title="Little Women", author=this_author)
+# or on one line...
+my_book = Book.objects.create(title="Little Women", author=Author.objects.get(id=2))
+```
+Joins in Django happen automatically. If you have a book object, you don't need to run any additional query to get information about the author. my_book.author.name will give "Louisa May Alcott", in this case.
+
+You can search based off of a ForeignKey relationship. This code will find all of the books by the author with ID 2:
+
+```python
+this_author = Author.objects.get(id=2)
+books = Book.objects.filter(author=this_author)
+# one-line version:
+books = Book.objects.filter(author=Author.objects.get(id=2))
+```
+You can also search by a field in the related object by using a double underscore:
+
+```python
+books = Book.objects.filter(author__name="Louise May Alcott")
+books = Book.objects.filter(author__name__startswith="Lou")
+```
+
+
