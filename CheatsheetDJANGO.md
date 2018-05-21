@@ -235,9 +235,108 @@ In the html file, Django lets you directly access request.session.  For example 
 -- This will retrieve (get) the value stored in key
 - `request.session['key'] = 'value'`
 -- Set the value that will be stored by key
-- del request.session['key']
+- `del request.session['key']`
 -- Deletes a session key if it exists, throws a keyError if it doesn’t. Use along with try and except since it’s better to ask for forgiveness than permission
-- 'key' in request.session
+- `'key' in request.session`
 -- Returns a boolean of whether a key is in session or not
-- {{ request.session.name }}
+- `{{ request.session.name }}`
 -- Use dot notation (.) to access request.session keys from templates since square brackets ([]) aren’t allowed there
+
+## ORM's
+
+We've mentioned ORM's previously, and your instructor may have even explained a little more. Let's take a moment to get a better understanding of what an ORM does.
+
+ORMs are used to create a language-specific object oriented representation of a table. When tables are objects, attributes of these objects represent the columns in the database, while methods will correspond to common queries.
+
+If the terms methods and attributes don't sound familiar to you, go back and review that section from OOP.
+
+The reason that ORMs are useful is so that we can write pure Python code without having to manage long SQL query strings in our logic. You know from experience how ugly SQL queries can get when doing complex selects. Given clearly named table methods our code becomes much more clear and easy to read with the help of an ORM.
+
+Next, we'll get deeper into models and how they work before giving you the tools to try them out!
+
+Models in the MTV architecture do all the work of data manipulation. They control which data are released to the controllers. Because of this, the phrase skinny controllers and fat models is often used, and is an important design principle:
+
+Any heavy logic including database queries is the purview of a Model. If a Controller (in Django's case, a View) needs to perform logic or get information from a database, it should use a Model method to do so.
+Blogs, Comments, Admins Example
+For our blogs app, let's say that we wanted people to not only create blogs but also add comments.  Let's also allow a blog to be owned by multiple admins and where an admin can also have multiple blogs (in other words, a many to many relationship).
+
+Note that a blog can have many comments (one to many relationship) and a blog can have many admins as well as one admin having multiple blogs (many to many relationship). 
+
+To implement this in Django, you would have the following code in your models.py:  (as Django likes to keep the model class singular, we'll follow their convention)
+
+```python
+# Inside models.py
+from __future__ import unicode_literals
+from django.db import models
+# Create your models here.
+class Blog(models.Model):
+      name = models.CharField(max_length=255)
+      desc = models.TextField()
+      created_at = models.DateTimeField(auto_now_add = True)
+      updated_at = models.DateTimeField(auto_now = True)
+  class Comment(models.Model):
+      comment = models.CharField(max_length=255)
+      created_at = models.DateTimeField(auto_now_add = True)
+      updated_at = models.DateTimeField(auto_now = True)
+      # Notice the association made with ForeignKey for a one-to-many relationship
+      # There can be many comments to one blog
+      blog = models.ForeignKey(Blog, related_name = "comments")
+  class Admin(models.Model):
+      first_name = models.CharField(max_length=255)
+      last_name = models.CharField(max_length=255)
+      email = models.CharField(max_length=255)
+      blogs = models.ManyToManyField(Blog, related_name = "admins")
+      created_at = models.DateTimeField(auto_now_add = True)
+      updated_at = models.DateTimeField(auto_now = True)
+```
+That `ForeignKey` statement is the equivalent of the one-to-many relationship shown in the ERD diagram.
+
+### Column types
+You can find a full list of allowed column types in the documentation, but here are some of the main ones you'll be using.
+
+- `CharField`
+
+Any text that a user may enter. This has one additional required parameter, max_length, that (unsurprisingly) is the maximum length of text that can be saved.
+
+- `TextField`
+
+Like a CharField, but with no maximum length. Your user could copy the entire text of the Harry Potter series into the field, and it would save in the database correctly.
+
+- `IntegerField`, `BooleanField`
+
+Holds integers or booleans, respectively
+
+`DateTimeField`
+
+Used for date and times, such as timestamps or when a flight is scheduled to depart. This field can take two very useful optional parameters, auto_now_add=True, which adds the current date/time when object is created, and auto_now=True, which automatically updates any time the object is modified.
+
+`ForeignKey`, `ManyToManyField`, `OneToOneField`
+
+Used to indicate a relationship between models (anything that would require a JOIN statement in SQL). ForeignKey is for one-to-many relationships and goes in the model on the "many" side, just as the foreign key column goes in the SQL table on the "many" side.
+
+### Migrations
+
+Now think back to Flask. Creating an ERD diagram didn't actually create the database table(s). We had to forward engineer the diagram into SQL code, and then run that SQL code in a MySQL environment. Instead of using a separate program to do this Django can do the whole job for us with minimal code.
+
+To do the equivalent of forward engineer we are going to run a couple of commands from the terminal.
+
+```
+  > python manage.py makemigrations
+  > python manage.py migrate
+```
+makemigrations is a kind of staging. When this command runs Django is looking at the code we wrote, finding any changes, and formulating the correct Python code to move on to the next step.
+
+migrate actually applies the changes made above. This step is where the SQL queries are actually built and executed and is equivalent to forward engineering an ERD.
+
+The migration process is split into two steps so that Django can check and make sure you wrote code it can understand before moving on to the next step.
+
+Note:
+1. Never delete migration files, and always makemigrations and migrate anytime you change something in your models.py files – that's what updates the actual database so it reflects what's in your models.
+
+2. For now we are going to be using SQLite - a SQL database that comes packaged with Django and has much of the functionality of MySQL (but not all of it) and is stored as local memory in a file, and as such is very fast. This type of database is best used in development, like we're doing now.
+
+3. For deployment you'll have the option to use SQLite, but we'll also show you how to add a MySQL database, which you've already used with Flask.
+
+4. Django ORM models and queries will always be the same no matter which database we are using.
+
+Now we've seen how to build a model and migrate in order to translate our code to SQL.
